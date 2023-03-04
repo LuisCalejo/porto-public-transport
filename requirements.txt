@@ -2,3 +2,4 @@ geopandas==0.12.2
 googlemaps==4.10.0
 numpy==1.23.5
 pandas==1.5.1
+shapely==1.8.4

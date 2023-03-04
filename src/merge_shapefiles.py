@@ -3,14 +3,16 @@ import json as json
 import pandas as pd
 
 df_mapping = pd.read_csv('../data/shapefile_mapping.csv')
-# gdf = gpd.read_file('../data/parish_shapefile.shp')
+df_parishes = pd.read_csv('../data/parishes.csv')
 with open('../data/parish_shapefile.json', 'r') as f:
     shapes = json.load(f)
 
-child_parishes = [x for x in df_mapping['shapefile']]
-parent_parishes = [x for x in df_mapping['parish']]
-municipalities = df_mapping['municipality'].unique()
-parish_mapping = dict(zip([x for x in df_mapping['shapefile']], [x for x in df_mapping['parish']]))
+parish_include = df_parishes[df_parishes['include']]['parish'].values
+df_mapping_filtered = df_mapping[[x in parish_include for x in df_mapping['parish']]]
+child_parishes = [x for x in df_mapping_filtered['shapefile']]
+parent_parishes = [x for x in df_mapping_filtered['parish']]
+municipalities = df_mapping_filtered['municipality'].unique()
+parish_mapping = dict(zip([x for x in df_mapping_filtered['shapefile']], [x for x in df_mapping_filtered['parish']]))
 
 # Filter shapes to Porto
 features_porto = []
@@ -53,5 +55,3 @@ for parish in parent_children_indices.keys():
 gdf_new_json = gdf_new.to_json()
 with open('../data/parish_shapefile_merged.json', 'w') as f:
     json.dump(json.loads(gdf_new_json), f)
-
-x=1
