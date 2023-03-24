@@ -2,9 +2,11 @@ import geopandas as gpd
 import json as json
 import pandas as pd
 import math
-from shapely.geometry import shape, LineString
+from shapely.geometry import shape, LineString, GeometryCollection, Polygon
 from shapely.ops import split
 import re
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def split_shapes(geometry):
@@ -24,8 +26,21 @@ def split_shapes(geometry):
         # Split shape with horizontal line
         line = LineString([(centroid_x+x_length, centroid_y), (centroid_x-x_length, centroid_y)])
     result = split(geometry, line)
-    # half1, half2 = result[0], result[1]
+    if len(result) > 2:
+        # pick geometries with largest area
+        geom_areas = np.array([x.area for x in result])
+        sorted_indices = np.argsort(geom_areas)
+        highest_indices = sorted_indices[-2:]
+        result = [result[x] for x in highest_indices]
     return result
+
+
+def plot_shapes(shapes):
+    fig, ax = plt.subplots()
+    for geom in shapes:
+        x, y = geom.exterior.xy
+        ax.plot(x, y)
+    plt.show()
 
 
 df_parishes = pd.read_csv('../data/parishes.csv')
@@ -53,10 +68,10 @@ for feature in shapes['features']:
     points += new_points
     for i in range(0, len(new_points)):
         parishes_df.append(feature['properties']['name_3'])
-        point_names_df.append(feature['properties']['name_3'] + '_' + str(i))
+        point_names_df.append(feature['properties']['name_3'] + '' + str(i+1))
 df_points = pd.DataFrame()
 df_points['parish'] = parishes_df
 df_points['point_name'] = point_names_df
 df_points['lat'] = [point[1] for point in points]
 df_points['long'] = [point[0] for point in points]
-df_points.to_csv('../data/points.csv')
+df_points.to_csv('../data/points.csv', index=False)
